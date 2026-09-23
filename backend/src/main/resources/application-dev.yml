@@ -1,10 +1,10 @@
 spring:
-  # ─── SQL Server (Docker local) ───
+  # ─── PostgreSQL (Docker local) ───
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=kbase_db;encrypt=false;trustServerCertificate=true
-    username: sa
-    password: 12345
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:postgresql://localhost:5432/kbase_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       connection-timeout: 30000
@@ -13,7 +13,7 @@ spring:
     hibernate:
       ddl-auto: validate        # Flyway quản lý schema, Hibernate chỉ validate
     show-sql: true
-    database-platform: org.hibernate.dialect.SQLServerDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # ─── Flyway ───
   flyway:
