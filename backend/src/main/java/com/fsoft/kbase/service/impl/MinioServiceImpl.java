@@ -36,8 +36,7 @@ public class MinioServiceImpl implements MinioService {
                 log.info("MinIO bucket '{}' already exists.", bucketName);
             }
         } catch (Exception e) {
-            log.error("Error occurred while checking/creating bucket: ", e);
-            throw new SystemException("Could not initialize MinIO bucket");
+            log.warn("Could not connect to MinIO to check/create bucket '{}'. Storage features will be unavailable until MinIO is properly configured. Error: {}", bucketName, e.getMessage());
         }
     }
 
