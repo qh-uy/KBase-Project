@@ -1,0 +1,38 @@
+spring:
+  # ─── SQL Server (Docker local) ───
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=kbase_db;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: 12345
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate        # Flyway quản lý schema, Hibernate chỉ validate
+    show-sql: true
+    database-platform: org.hibernate.dialect.SQLServerDialect
+
+  # ─── Flyway ───
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  # ─── Mail (MailHog local) ───
+  mail:
+    host: localhost
+    port: 1025
+
+# ─── Logging ───
+logging:
+  level:
+    com.fsoft.kbase: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
