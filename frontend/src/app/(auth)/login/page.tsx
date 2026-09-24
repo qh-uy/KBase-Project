@@ -30,7 +30,8 @@ export default function LoginPage() {
           id: 1,
           email: "demo@kbase.com",
           fullName: "Demo User",
-          role: "OWNER"
+          role: "OWNER",
+          avatarUrl: null
         };
         setAuth(fakeUser, "mock-access-token", "mock-refresh-token");
         router.push("/dashboard");
