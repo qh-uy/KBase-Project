@@ -25,6 +25,7 @@ interface Project {
 
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
 
@@ -38,12 +39,13 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!user) {
       router.push("/login");
       return;
     }
     fetchProjects();
-  }, [user, router]);
+  }, [user, hasHydrated, router]);
 
   const fetchProjects = async () => {
     try {

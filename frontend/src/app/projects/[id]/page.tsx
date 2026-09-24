@@ -42,6 +42,7 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.id;
   const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const router = useRouter();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -67,12 +68,13 @@ export default function ProjectDetailPage() {
   const isOwnerOrAdmin = user?.role === 'ADMIN' || (user?.role === 'OWNER' && project?.owner.id === user?.id);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!user) {
       router.push("/login");
       return;
     }
     fetchProjectDetails();
-  }, [user, router, projectId]);
+  }, [user, hasHydrated, router, projectId]);
 
   const fetchProjectDetails = async () => {
     try {

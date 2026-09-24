@@ -18,6 +18,7 @@ interface UserProfile {
 
 export default function UserManagementPage() {
   const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const router = useRouter();
 
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
@@ -25,6 +26,7 @@ export default function UserManagementPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!user) {
       router.push("/login");
       return;
@@ -34,7 +36,7 @@ export default function UserManagementPage() {
       return;
     }
     fetchUsers();
-  }, [user, router]);
+  }, [user, hasHydrated, router]);
 
   const fetchUsers = async (searchQuery = "") => {
     try {
