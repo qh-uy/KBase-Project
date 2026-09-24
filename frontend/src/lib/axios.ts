@@ -5,9 +5,6 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kbase-project.on
 
 const api = axios.create({
   baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 api.interceptors.request.use(
@@ -15,6 +12,10 @@ api.interceptors.request.use(
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Only set JSON content-type when body is NOT FormData (file uploads)
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
     }
     return config;
   },
