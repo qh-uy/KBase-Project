@@ -48,32 +48,8 @@ export default function Dashboard() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Mock Data
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setProjects([
-        {
-          id: 1,
-          name: "Website Redesign",
-          slug: "website-redesign",
-          description: "New corporate website for 2026.",
-          coverUrl: null,
-          owner: { id: 1, fullName: "Demo User", email: "demo@kbase.com" },
-          isActive: true,
-          memberCount: 5,
-          createdAt: "2026-09-01T10:00:00Z"
-        },
-        {
-          id: 2,
-          name: "Mobile App V2",
-          slug: "mobile-app-v2",
-          description: "React Native implementation of the new app.",
-          coverUrl: null,
-          owner: { id: 1, fullName: "Demo User", email: "demo@kbase.com" },
-          isActive: true,
-          memberCount: 3,
-          createdAt: "2026-09-15T08:30:00Z"
-        }
-      ]);
+      const res = await api.get("/projects");
+      setProjects(res.data.content || []);
     } catch (error) {
       console.error("Failed to fetch projects", error);
     } finally {
@@ -87,22 +63,14 @@ export default function Dashboard() {
 
     try {
       setIsCreating(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newProj = {
-        id: Math.floor(Math.random() * 1000) + 3,
+      await api.post("/projects", {
         name: newProjectName,
-        slug: newProjectName.toLowerCase().replace(/\s+/g, '-'),
         description: newProjectDesc,
-        coverUrl: null,
-        owner: { id: 1, fullName: user?.fullName || "Demo User", email: user?.email || "demo@kbase.com" },
-        isActive: true,
-        memberCount: 1,
-        createdAt: new Date().toISOString()
-      };
-      setProjects([newProj, ...projects]);
+      });
       setIsModalOpen(false);
       setNewProjectName("");
       setNewProjectDesc("");
+      fetchProjects(); // Refresh real list from server
     } catch (error) {
       console.error("Failed to create project", error);
     } finally {

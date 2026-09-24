@@ -22,23 +22,23 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (email === "admin@kbase.com" && password === "password") {
-        setAuth({ id: 1, email, fullName: "Admin User", role: "ADMIN", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
-        router.push("/dashboard");
-      } else if (email === "owner@kbase.com" && password === "password") {
-        setAuth({ id: 2, email, fullName: "Project Owner", role: "OWNER", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
-        router.push("/dashboard");
-      } else if (email === "user@kbase.com" && password === "password") {
-        setAuth({ id: 3, email, fullName: "Regular User", role: "USER", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
-        router.push("/dashboard");
-      } else {
-        throw new Error("Invalid credentials. Try admin@kbase.com, owner@kbase.com, or user@kbase.com with 'password'");
-      }
+      const response = await api.post("/auth/login", { email, password });
+      const { accessToken, refreshToken, user } = response.data;
+      setAuth(
+        {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          avatarUrl: user.avatarUrl ?? null,
+        },
+        accessToken,
+        refreshToken
+      );
+      router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Login failed. Please check your credentials.");
+      const msg = err.response?.data?.message || err.response?.data?.error || "Login failed. Please check your credentials.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
