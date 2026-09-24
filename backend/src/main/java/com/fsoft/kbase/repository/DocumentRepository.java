@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("SELECT d FROM Document d WHERE d.project.id = :projectId " +
-           "AND (:fileType IS NULL OR d.fileType = :fileType) " +
-           "AND (:search IS NULL OR LOWER(d.originalName) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:fileType as text) IS NULL OR d.fileType = :fileType) " +
+           "AND (cast(:search as text) IS NULL OR LOWER(d.originalName) LIKE LOWER(CONCAT('%', cast(:search as text), '%')))")
     Page<Document> findByProjectId(
             @Param("projectId") Long projectId,
             @Param("fileType") DocumentType fileType,

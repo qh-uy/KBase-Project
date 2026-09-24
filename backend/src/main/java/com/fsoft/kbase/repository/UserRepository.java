@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     @Query("SELECT u FROM User u WHERE " +
-           "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(cast(:search as text) IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', cast(:search as text), '%')) " +
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', cast(:search as text), '%')))")
     Page<User> searchUsers(@Param("search") String search, Pageable pageable);
 }
