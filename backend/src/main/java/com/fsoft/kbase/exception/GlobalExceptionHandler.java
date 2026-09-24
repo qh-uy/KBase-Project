@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletRequest request) {
         ex.printStackTrace(); // Log unexpected exceptions for debugging
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred. Please try again.", request.getRequestURI());
+                "Unexpected error (" + ex.getClass().getSimpleName() + "): " + ex.getMessage(), request.getRequestURI());
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message, String path) {
