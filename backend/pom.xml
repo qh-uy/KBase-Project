@@ -23,7 +23,7 @@
         <mapstruct.version>1.6.2</mapstruct.version>
         <lombok.version>1.18.34</lombok.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <minio.version>8.5.11</minio.version>
+        <cloudinary.version>1.38.0</cloudinary.version>
         <springdoc.version>2.6.0</springdoc.version>
     </properties>
 
@@ -90,11 +90,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ─── MinIO SDK ─── -->
+        <!-- ─── Cloudinary SDK ─── -->
         <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>${cloudinary.version}</version>
         </dependency>
 
         <!-- ─── Lombok ─── -->

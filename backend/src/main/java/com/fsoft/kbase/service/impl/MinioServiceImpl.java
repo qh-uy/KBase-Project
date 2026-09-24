@@ -1,9 +1,9 @@
 package com.fsoft.kbase.service.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.fsoft.kbase.exception.SystemException;
 import com.fsoft.kbase.service.MinioService;
-import io.minio.*;
-import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,99 +11,77 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MinioServiceImpl implements MinioService {
 
-    private final MinioClient minioClient;
+    private final Cloudinary cloudinary;
 
-    @Value("${app.minio.bucket-name}")
-    private String bucketName;
+    @Value("${app.cloudinary.cloud-name}")
+    private String cloudName;
+
+    private static final String BUCKET_NAME = "kbase";
 
     @PostConstruct
     public void init() {
-        try {
-            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!found) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                log.info("MinIO bucket '{}' created successfully.", bucketName);
-            } else {
-                log.info("MinIO bucket '{}' already exists.", bucketName);
-            }
-        } catch (Exception e) {
-            log.warn("Could not connect to MinIO to check/create bucket '{}'. Storage features will be unavailable until MinIO is properly configured. Error: {}", bucketName, e.getMessage());
-        }
+        log.info("Cloudinary storage initialized. Cloud: {}", cloudName);
     }
 
     @Override
     public String uploadFile(MultipartFile file, String pathPrefix) {
         try {
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : "";
-            
-            // Format: prefix/UUID.ext
-            String objectName = pathPrefix + "/" + UUID.randomUUID() + extension;
+            String publicId = pathPrefix.replace("/", "_") + "_" + UUID.randomUUID();
 
-            InputStream inputStream = file.getInputStream();
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build()
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "public_id", publicId,
+                            "folder",    "kbase/" + pathPrefix,
+                            "resource_type", "auto"   // handles PDF, images, videos, docs
+                    )
             );
 
-            log.info("File uploaded successfully to MinIO as: {}", objectName);
-            return objectName;
+            String secureUrl = (String) uploadResult.get("secure_url");
+            log.info("File uploaded to Cloudinary: {}", secureUrl);
+            // Return the public_id so we can delete later; prefix with "url:" to distinguish
+            return "url:" + secureUrl + "|id:" + uploadResult.get("public_id");
         } catch (Exception e) {
-            log.error("Failed to upload file to MinIO: ", e);
-            throw new SystemException("Failed to upload file to storage.");
+            log.error("Failed to upload file to Cloudinary", e);
+            throw new SystemException("Failed to upload file to storage: " + e.getMessage());
         }
     }
 
     @Override
     public String getPresignedUrl(String objectName) {
-        try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .expiry(1, TimeUnit.HOURS)
-                            .build()
-            );
-        } catch (Exception e) {
-            log.error("Failed to get presigned URL from MinIO for object: {}", objectName, e);
-            throw new SystemException("Failed to generate download link.");
+        // objectName was stored as "url:<url>|id:<publicId>" or plain URL
+        if (objectName == null) return null;
+        if (objectName.startsWith("url:")) {
+            return objectName.substring(4, objectName.indexOf("|id:"));
         }
+        // Legacy / plain URL fallback
+        return objectName;
     }
 
     @Override
     public void deleteFile(String objectName) {
         try {
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .build()
-            );
-            log.info("File deleted successfully from MinIO: {}", objectName);
+            if (objectName != null && objectName.startsWith("url:") && objectName.contains("|id:")) {
+                String publicId = objectName.substring(objectName.indexOf("|id:") + 4);
+                cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "auto"));
+                log.info("File deleted from Cloudinary: {}", publicId);
+            }
         } catch (Exception e) {
-            log.error("Failed to delete file from MinIO: {}", objectName, e);
-            throw new SystemException("Failed to delete file from storage.");
+            log.warn("Failed to delete file from Cloudinary: {}", e.getMessage());
         }
     }
 
     @Override
     public String getBucketName() {
-        return bucketName;
+        return BUCKET_NAME;
     }
 }
