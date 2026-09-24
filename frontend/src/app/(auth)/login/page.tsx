@@ -25,18 +25,17 @@ export default function LoginPage() {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (email === "demo@kbase.com" && password === "password") {
-        const fakeUser = {
-          id: 1,
-          email: "demo@kbase.com",
-          fullName: "Demo User",
-          role: "OWNER",
-          avatarUrl: null
-        };
-        setAuth(fakeUser, "mock-access-token", "mock-refresh-token");
+      if (email === "admin@kbase.com" && password === "password") {
+        setAuth({ id: 1, email, fullName: "Admin User", role: "ADMIN", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
+        router.push("/dashboard");
+      } else if (email === "owner@kbase.com" && password === "password") {
+        setAuth({ id: 2, email, fullName: "Project Owner", role: "OWNER", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
+        router.push("/dashboard");
+      } else if (email === "user@kbase.com" && password === "password") {
+        setAuth({ id: 3, email, fullName: "Regular User", role: "USER", avatarUrl: null }, "mock-access-token", "mock-refresh-token");
         router.push("/dashboard");
       } else {
-        throw new Error("Invalid credentials. Try demo@kbase.com / password");
+        throw new Error("Invalid credentials. Try admin@kbase.com, owner@kbase.com, or user@kbase.com with 'password'");
       }
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your credentials.");
