@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kbase-project.onrender.com/api/v1';
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: BACKEND_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,7 +33,7 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         if (!refreshToken) throw new Error('No refresh token');
         
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://kbase-project.onrender.com/api/v1';
         const response = await axios.post(`${baseURL}/auth/refresh-token`, {
           token: refreshToken
         });
