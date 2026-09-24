@@ -93,7 +93,7 @@
         <!-- ─── Cloudinary SDK ─── -->
         <dependency>
             <groupId>com.cloudinary</groupId>
-            <artifactId>cloudinary-http5</artifactId>
+            <artifactId>cloudinary-http45</artifactId>
             <version>${cloudinary.version}</version>
         </dependency>
 
