@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/axios";
 import { 
-  Folder, ArrowLeft, Users, FileText,
+  Folder, ArrowLeft, Users, FileText, Plus,
   Loader2, Search, FileUp, X, Mail, Image as ImageIcon, Video, Trash2, Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
