@@ -5,8 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/axios";
 import { 
-  Folder, ArrowLeft, Users, FileText, Settings, 
-  Plus, Loader2, Search, FileUp, X, Mail, Image as ImageIcon, Video, Trash2, Download
+  Folder, ArrowLeft, Users, FileText,
+  Loader2, Search, FileUp, X, Mail, Image as ImageIcon, Video, Trash2, Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,7 +65,8 @@ export default function ProjectDetailPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
-  const isOwnerOrAdmin = user?.role === 'ADMIN' || (user?.role === 'OWNER' && project?.owner.id === user?.id);
+  const isOwner = user?.role === 'OWNER' && project?.owner.id === user?.id;
+  const isOwnerOrAdmin = user?.role === 'ADMIN' || isOwner;
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -194,6 +195,17 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!project) return;
+    if (!confirm(`Are you sure you want to permanently delete "${project.name}"? This action cannot be undone.`)) return;
+    try {
+      await api.delete(`/projects/${projectId}`);
+      router.push("/dashboard");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Failed to delete project.");
+    }
+  };
+
   if (!user) return null;
 
   if (loading) {
@@ -254,12 +266,18 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           
-          {isOwnerOrAdmin && (
-            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition-colors border border-white/5">
-              <Settings size={18} />
-              Settings
-            </button>
-          )}
+          {/* Only the project OWNER can delete */}
+          <div className="flex items-center gap-3">
+            {isOwner && (
+              <button
+                onClick={handleDeleteProject}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors border border-red-500/20"
+              >
+                <Trash2 size={18} />
+                Delete Project
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -306,25 +324,34 @@ export default function ProjectDetailPage() {
       {/* Tab Content */}
       <div className="relative z-10">
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 glass-panel p-6 rounded-2xl">
-              <h3 className="text-xl font-bold text-white mb-4">Project Activity</h3>
-              <div className="py-12 text-center text-zinc-500">
-                No recent activity to display.
+          <div className="glass-panel p-6 rounded-2xl">
+            <h3 className="text-lg font-bold text-white mb-6">Project Statistics</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-zinc-800/40 rounded-xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                  <FileText size={20} className="text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{project.documentCount}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Documents</p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-2xl">
-                <h3 className="text-lg font-bold text-white mb-4">Statistics</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-zinc-400 flex items-center gap-2"><FileText size={16}/> Documents</span>
-                    <span className="text-white font-medium">{project.documentCount}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-zinc-400 flex items-center gap-2"><Users size={16}/> Members</span>
-                    <span className="text-white font-medium">{project.memberCount}</span>
-                  </div>
+              <div className="bg-zinc-800/40 rounded-xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                  <Users size={20} className="text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{project.memberCount}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Members</p>
+                </div>
+              </div>
+              <div className="bg-zinc-800/40 rounded-xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center">
+                  <Folder size={20} className="text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">{new Date(project.createdAt).toLocaleDateString("vi-VN")}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Created Date</p>
                 </div>
               </div>
             </div>

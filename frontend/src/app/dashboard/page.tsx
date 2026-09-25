@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LogOut, Folder, Plus, X, Loader2 } from "lucide-react";
+import { LogOut, Folder, Plus, X, Loader2, ShieldCheck, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/axios";
 
@@ -72,7 +72,7 @@ export default function Dashboard() {
       setIsModalOpen(false);
       setNewProjectName("");
       setNewProjectDesc("");
-      fetchProjects(); // Refresh real list from server
+      fetchProjects();
     } catch (error) {
       console.error("Failed to create project", error);
     } finally {
@@ -80,7 +80,15 @@ export default function Dashboard() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   if (!user) return null;
+
+  // Admin cannot create projects — only OWNER role can
+  const canCreateProject = user.role === "OWNER";
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -88,22 +96,35 @@ export default function Dashboard() {
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Projects</h2>
           <p className="text-gray-500">
-            {user.role === 'ADMIN' 
-              ? 'Manage all projects in the system' 
-              : 'Manage your knowledge base projects'}
+            {user.role === "ADMIN"
+              ? "View all projects in the system"
+              : "Manage your knowledge base projects"}
           </p>
         </div>
-        
-        {/* Chỉ OWNER và ADMIN mới được tạo Project */}
-        {(user.role === 'OWNER' || user.role === 'ADMIN') && (
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/25 transition-all"
-          >
-            <Plus size={20} />
-            New Project
-          </button>
-        )}
+
+        <div className="flex items-center gap-3">
+          {/* Admin quick link to user management */}
+          {user.role === "ADMIN" && (
+            <button
+              onClick={() => router.push("/users")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl border border-white/10 transition-all text-sm"
+            >
+              <Users size={16} />
+              Manage Users
+            </button>
+          )}
+
+          {/* Only OWNER can create projects — Admin cannot */}
+          {canCreateProject && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/25 transition-all"
+            >
+              <Plus size={20} />
+              New Project
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
@@ -115,7 +136,11 @@ export default function Dashboard() {
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-center glass-panel rounded-2xl">
             <Folder className="w-16 h-16 text-zinc-600 mb-4" />
             <h3 className="text-xl font-medium text-white mb-2">No projects yet</h3>
-            <p className="text-zinc-400 max-w-md">Get started by creating a new project to organize your knowledge base.</p>
+            <p className="text-zinc-400 max-w-md">
+              {user.role === "ADMIN"
+                ? "No projects have been created in the system yet."
+                : "Get started by creating a new project to organize your knowledge base."}
+            </p>
           </div>
         ) : (
           projects.map((project) => (
@@ -134,7 +159,7 @@ export default function Dashboard() {
               <p className="text-zinc-400 text-sm mb-4 line-clamp-2 min-h-[40px]">
                 {project.description || "No description provided."}
               </p>
-              
+
               <div className="flex flex-col gap-2 mt-auto text-xs text-zinc-500 border-t border-white/5 pt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-300 font-medium bg-white/5 px-2 py-1 rounded-md">
@@ -174,7 +199,7 @@ export default function Dashboard() {
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-white">Create New Project</h3>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
@@ -194,7 +219,7 @@ export default function Dashboard() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-zinc-300">Description</label>
                   <textarea
