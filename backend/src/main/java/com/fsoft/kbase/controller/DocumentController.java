@@ -31,7 +31,7 @@ public class DocumentController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "description", required = false) String description,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         return ResponseEntity.ok(
                 documentService.uploadDocument(projectId, userDetails.getUsername(), file, description)
         );
@@ -46,7 +46,7 @@ public class DocumentController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         return ResponseEntity.ok(
                 documentService.getDocuments(projectId, userDetails.getUsername(), fileType, search, page, size)
         );
@@ -58,8 +58,18 @@ public class DocumentController {
             @PathVariable Long projectId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         return ResponseEntity.ok(documentService.getDocument(projectId, documentId, userDetails.getUsername()));
+    }
+
+    @GetMapping("/{documentId}/proxy-download")
+    @Operation(summary = "Proxy download a document (forces browser download)")
+    public ResponseEntity<byte[]> proxyDownload(
+            @PathVariable Long projectId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return documentService.proxyDownload(projectId, documentId, userDetails.getUsername());
     }
 
     @DeleteMapping("/{documentId}")
@@ -68,7 +78,7 @@ public class DocumentController {
             @PathVariable Long projectId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         documentService.deleteDocument(projectId, documentId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }

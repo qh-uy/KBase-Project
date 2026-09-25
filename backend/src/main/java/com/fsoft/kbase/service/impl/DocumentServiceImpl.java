@@ -21,11 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -166,6 +175,61 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Delete from DB
         documentRepository.delete(document);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<byte[]> proxyDownload(Long projectId, Long documentId, String userEmail) {
+        Project project = getActiveProject(projectId);
+        User user = getUserByEmail(userEmail);
+
+        boolean isAdmin = user.getRole().getName().name().equals("ADMIN");
+        boolean isOwner = project.getOwner().getId().equals(user.getId());
+        boolean isMember = projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId());
+
+        if (!isAdmin && !isOwner && !isMember) {
+            throw new AccessDeniedException("You do not have permission to download this document.");
+        }
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document", "id", documentId));
+
+        if (!document.getProject().getId().equals(projectId)) {
+            throw new ResourceNotFoundException("Document not found in this project");
+        }
+
+        // Increment download count
+        document.setDownloadCount(document.getDownloadCount() + 1);
+        documentRepository.save(document);
+
+        // Fetch file from Cloudinary and stream it back
+        try {
+            String fileUrl = minioService.getPresignedUrl(document.getMinioKey());
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(fileUrl))
+                    .GET()
+                    .build();
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+            String mimeType = document.getMimeType() != null ? document.getMimeType() : "application/octet-stream";
+            String filename = document.getOriginalName() != null ? document.getOriginalName() : document.getFileName();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(mimeType));
+            headers.setContentDisposition(
+                    ContentDisposition.attachment().filename(filename).build()
+            );
+            headers.setContentLength(response.body().length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(response.body());
+
+        } catch (Exception e) {
+            log.error("Failed to proxy download document id={}: {}", documentId, e.getMessage());
+            throw new SystemException("Failed to download file: " + e.getMessage());
+        }
     }
 
     private String getExtension(String filename) {

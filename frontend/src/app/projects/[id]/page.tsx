@@ -175,6 +175,25 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDownload = async (doc: DocumentItem) => {
+    try {
+      const res = await api.get(`/projects/${projectId}/documents/${doc.id}/proxy-download`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", doc.originalName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+      alert("Failed to download file. Please try again.");
+    }
+  };
+
   if (!user) return null;
 
   if (loading) {
@@ -374,15 +393,13 @@ export default function ProjectDetailPage() {
                         <td className="py-4 text-zinc-400">{new Date(doc.createdAt).toLocaleDateString()}</td>
                         <td className="py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <a 
-                              href={doc.downloadUrl}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              onClick={() => handleDownload(doc)}
                               className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors"
                               title="Download"
                             >
                               <Download size={16} />
-                            </a>
+                            </button>
                             {(isOwnerOrAdmin || user.email === doc.uploadedBy.email) && (
                               <button 
                                 onClick={() => handleDeleteDocument(doc.id)}
