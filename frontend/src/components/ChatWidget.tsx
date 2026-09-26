@@ -51,7 +51,7 @@ export default function ChatWidget() {
       }));
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -271,7 +271,7 @@ export default function ChatWidget() {
                 </button>
               </div>
               <p className="text-xs text-zinc-700 mt-2 text-center">
-                KBase AI · Gemini 2.0 Flash
+                KBase AI · Gemini 3.8 Flash
               </p>
             </div>
           </motion.div>
