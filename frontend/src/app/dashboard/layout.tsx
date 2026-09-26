@@ -1,4 +1,5 @@
 import Header from '@/components/layout/Header';
+import ChatWidget from '@/components/ChatWidget';
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,8 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+      {/* Floating AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }
